@@ -1,0 +1,22 @@
+.macro printInt (%label, %offset)
+	addiu $v0, $zero, 1	# set syscall service
+	li $t0, %offset		# load offset to T0
+	la $t1, %label		# load label addr to T1
+	add $a0, $t1, $t0	# set argument to wanted addr
+	lb $a0, ($a0)		# load real int
+	syscall 		# syscall, print($a0)
+.end_macro
+
+.macro readInt (%dest)
+	addiu $v0, $zero, 5
+	syscall 
+	add %dest, $v0, $zero
+.end_macro
+
+.macro randomInt(%max, %dest)
+	addiu $v0, $zero, 42	# set syscall service
+	addiu $a0, $zero, 0	# A0 to 0 (random machine ID), can be any number
+	addiu $a1, $zero, %max	# set upper bound
+	syscall 		# syscall rand()%max
+	add %dest, $zero, $a0	# set result to destination register
+.end_macro

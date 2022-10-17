@@ -1,0 +1,8 @@
+.macro printStr(%str)
+	.data
+minhaStr: .asciiz %str
+	.text 
+	addiu $v0, $zero, 4
+	la $a0, minhaStr
+	syscall
+.end_macro 

@@ -1,0 +1,90 @@
+addiu $v0, $zero, 4 	# set syscall print string
+	la $a0, cmpTopLabel
+	syscall
+
+	#linha 1 char
+	addiu $v0, $zero, 4
+	la $a0, cmpL1
+	syscall
+	
+	addiu $v0, $zero, 11
+	la $a0, 0(campo)
+	syscall 
+	
+	addiu $v0, $zero, 4
+	la $a0, cmpDivV
+	syscall	
+	
+	addiu $v0, $zero, 11
+	la $a0, 1(campo)
+	syscall
+	
+	addiu $v0, $zero, 4
+	la $a0, cmpDivV
+	syscall	
+	
+	addiu $v0, $zero, 11
+	la $a0, 2(campo)
+	syscall
+	
+	#linha 2 div
+	addiu $v0, $zero, 4
+	la $a0, cmpDivH
+	syscall	
+	
+	#linha 3 char
+	addiu $v0, $zero, 4
+	la $a0, cmpL2
+	syscall
+	
+	addiu $v0, $zero, 11
+	la $a0, 3(campo)
+	syscall
+	
+	addiu $v0, $zero, 4
+	la $a0, cmpDivV
+	syscall	
+	
+	addiu $v0, $zero, 11
+	la $a0, 4(campo)
+	syscall
+	
+	addiu $v0, $zero, 4
+	la $a0, cmpDivV
+	syscall	
+	
+	addiu $v0, $zero, 11
+	la $a0, 5(campo)
+	syscall
+	
+	#linha 4 div
+	addiu $v0, $zero, 4
+	la $a0, cmpDivH
+	syscall	
+	
+	#linha 5 char
+	addiu $v0, $zero, 4
+	la $a0, cmpL3
+	syscall
+	
+	addiu $v0, $zero, 11
+	la $a0, 6(campo)
+	syscall
+	
+	addiu $v0, $zero, 4
+	la $a0, cmpDivV
+	syscall	
+	
+	addiu $v0, $zero, 11
+	la $a0, 7(campo)
+	syscall
+	
+	addiu $v0, $zero, 4
+	la $a0, cmpDivV
+	syscall	
+	
+	addiu $v0, $zero, 11
+	la $a0, 8(campo)
+	syscall
+	
+	jr $ra

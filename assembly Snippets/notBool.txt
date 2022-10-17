@@ -1,0 +1,3 @@
+.macro notBool (%dest, %val)
+	nor %dest, %val, %val
+.end_macro 

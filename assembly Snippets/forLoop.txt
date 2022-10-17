@@ -1,0 +1,9 @@
+.macro for(%i, %to, %body)
+	li %i, 0		# i = 0
+startLoop:
+	beq %i, %to, endLoop	# if i==to, goto end
+	jal %body 		# execute Body
+	addiu %i, %i, 1 	# i++
+	j startLoop		# goto startLoop
+endLoop:
+.end_macro 

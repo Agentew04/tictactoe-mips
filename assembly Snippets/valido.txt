@@ -1,0 +1,27 @@
+# a0 => linha
+# a1 => col
+# v0 <= 0/1
+valido:
+	bltz $a0, valid.false 	# linha < 0 => false
+	bltz $a1, valid.false	# col < 0   => false
+	bgt $a0, 2, valid.false	# linha > 2 => false
+	bgt $a1, 2, valid.false	# col > 2   => false
+	
+	#col + linha * 3 // x,y to one idx
+	addiu $t0, $zero, 3
+	mul $t0, $a0, $t0
+	add $t0, $t0, $a1 	# T0 = correct index
+	
+	la $t1, campo
+	add $t1, $t1, $t0	# T1 = &campo + T0
+	lb $t1, ($t1)		# T1 = campo[T0]
+	
+	addi $t1, $t1, -32	# T1 -= 32
+	bnez $t1, valid.false
+	j valid.true
+valid.true:
+	addiu $v0, $zero, 1	# return 1
+	jr $ra
+valid.false:
+	addiu $v0, $zero, 0	# return 0
+	jr $ra
