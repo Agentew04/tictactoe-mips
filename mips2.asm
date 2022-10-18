@@ -127,7 +127,6 @@ end:
 
 .data
 campo:		.space 9 # campo de chars 3x3 = 9
-cmpNL:		.asciiz "\n"
 cmpTopLabel:	.asciiz "\\ 0   1   2\n"
 cmpL1: 		.asciiz "0 "
 cmpL2: 		.asciiz "1 "
@@ -136,6 +135,11 @@ cmpDivV: 	.asciiz " | "
 cmpDivH: 	.asciiz "\n ---+---+---\n"
 inputL:		.asciiz "\nDigite a linha de sua jogada: "
 inputC:		.asciiz "\nDigite a coluna de sua jogada: "
+endChat:	.asciiz "O jogo acabou.\n"
+winChat:	.asciiz "O vencedor eh: "
+tieChat:	.asciiz "Deu empate. Nao tem vencedores!\n"
+exclamation:	.asciiz "!"
+charNL:		.asciiz "\n"
 
 .eqv XCHAR 88
 .eqv OCHAR 79
@@ -200,7 +204,7 @@ printCampo:
 	getArrImediate(campo, 8, $t0)
 	printChar($t0)
 	
-	printStrLabel(cmpNL)
+	printStrLabel(charNL)
 	jr $ra
 
 
@@ -227,8 +231,22 @@ valido.false:
 	addiu $v0, $zero, 0	# return 0
 	jr $ra
 
+# v=1 if not empate
+# v=0 if empate
 empate:
-	
+	add $t3, $zero, $ra	# save return addr
+	addiu $t2, $zero, 0	# T2 = 0
+	for($t0, 9, empateBody)	# T2 = if false, T2=0 
+	add $v0, $zero, $t2
+	jr $t3
+empateBody:
+	lb $t1, campo($t0)		# T1 = campo[T0]
+	addi $t1, $t1, -32 		# T1 -= 32
+	beq $t1, $zero, empateBody.true	# if campo[T0]==' ', T2=1
+	jr $ra
+empateBody.true:
+	addiu $t2, $zero, 1
+	jr $ra
 
 fillBody:
 	addiu $t1, $zero, 32
@@ -344,9 +362,9 @@ main.loopStart:				# do
 	randomInt(3, $s1)		# COL = RANDOM()
 	j main.inputEnd			# goto endInput
 main.playerInput:			# player input
-	printStr("\nDigite a linha de sua jogada: ")
+	printStrLabel(inputL)
 	readInt($s0)			# LINHA = scanf()
-	printStr("\nDigite a coluna de sua jogada: ")
+	printStrLabel(inputC)
 	readInt($s1)			# COL = scanf()
 main.inputEnd:
 	jal valido			# V0 = valido() => (1->valido; 0->invalido)
@@ -357,14 +375,34 @@ main.inputEnd:
 	jal printCampo			# printCampo()
 	
 	add $s4, $s4, 1			# i++
+	
 	jal ganhou			# V0 = ganhou() => (0 -> ninguem; 1 -> PLAYER; -1 -> AI)
-	beq $v0, $zero, main.loopStart  # if !ganhou() play
-main.endGame:
+	add $t0, $zero, $v0		# RES = V0
+	sll $t0, $t0, 1			# RES = RES << 1
 	
-	printStr("O jogo acabou.\nO vencedor eh: ")
+	jal empate			# V0 = empate() => (0-empate // 1-nao empate)
+	add $t0, $t0, $v0		# RES += V0
+	
+	beq $t0, $zero, main.loopStart  # if RES==0 play
+	
+	addi $t0, $t0, -2		# RES -= 2
+	bgez $t0, main.win		# ganhou()
+	j main.tie
+
+main.win:
+	printStrLabel(endChat)
+	printStrLabel(winChat)
 	printChar($s3)
-	printStr("!\n")
+	printStrLabel(exclamation)
+	printStrLabel(charNL)
+	j end
 	
+main.tie:
+	printStrLabel(endChat)
+	printStrLabel(tieChat)
+	j end
+	
+end:
 	
 	
 	

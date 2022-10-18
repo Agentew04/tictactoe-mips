@@ -1,4 +1,4 @@
-.macro printChar(%c)
+.macro printChar(%x)
 	addiu $v0, $zero, 11
 	add $a0, %x, $zero
 	syscall 
@@ -9,12 +9,3 @@
 	syscall 
 	add %dest, $zero, $v0
 .end_macro 
-
-.macro printChar (%label, %offset)
-	addiu $v0, $zero, 11	# set syscall service
-	li $t0, %offset		# load offset to T0
-	la $t1, %label		# load label addr to T1
-	add $a0, $t1, $t0	# set argument to wanted addr
-	lb $a0, ($a0)		# load real int
-	syscall 		# syscall, print($a0)
-.end_macro

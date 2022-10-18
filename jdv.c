@@ -107,13 +107,14 @@ int valido(){
 }
 
 int empate(){
-    int i;
-    for(i = 0; i < 9; i++){
+    int achou = 0;
+    for(int i = 0; i < 9; i++){
         if(campo[i] == ' '){
-            return 0;
+            achou = 1;
         }
     }
-    return 1;
+    return !achou;  // ESSE NOT NAO FOI IMPLEMENTADO NO MIPS!!!!
+                    // ELE RETORNA 0 SE TEM EMPATE E 1 SE NAO TEM
 }
 
 int main(void){
