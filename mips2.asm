@@ -1,10 +1,6 @@
 .text
 j main
 
-.macro notBool (%dest, %val)
-	nor %dest, %val, %val
-.end_macro 
-
 .macro for(%i, %to, %body)
 	li %i, 0		# i = 0
 startLoop:
@@ -94,6 +90,12 @@ minhaStr: .asciiz %str
 	syscall
 .end_macro 
 
+.macro printStrLabel(%label)
+	addiu $v0, $zero, 4
+	la $a0, %label
+	syscall
+.end_macro 
+
 .macro getArrImediate(%label, %offset, %dest)
 	la $t0, %label
 	addiu $t0, $t0, %offset
@@ -142,111 +144,66 @@ inputC:		.asciiz "\nDigite a coluna de sua jogada: "
 
 
 printCampo:
-	addiu $v0, $zero, 4 	# set syscall print string
-	la $a0, cmpTopLabel
-	syscall
+	printStrLabel(cmpTopLabel)
 
 	#linha 1 char
-	addiu $v0, $zero, 4
-	la $a0, cmpL1
-	syscall
+	printStrLabel(cmpL1)
 	
-	addiu $v0, $zero, 11
-	la $a0, campo+0
-	lb $a0, ($a0)
-	syscall 
+	getArrImediate(campo, 0, $t0)
+	printChar($t0)
 	
-	addiu $v0, $zero, 4
-	la $a0, cmpDivV
-	syscall	
+	printStrLabel(cmpDivV)
 	
-	addiu $v0, $zero, 11
-	la $a0, campo+1
-	lb $a0, ($a0)
-	syscall
+	getArrImediate(campo, 1, $t0)
+	printChar($t0)
 	
-	addiu $v0, $zero, 4
-	la $a0, cmpDivV
-	syscall	
+	printStrLabel(cmpDivV)
 	
-	addiu $v0, $zero, 11
-	la $a0, campo+2
-	lb $a0, ($a0)
-	syscall
+	getArrImediate(campo, 2, $t0)
+	printChar($t0)
 	
 	#linha 2 div
-	addiu $v0, $zero, 4
-	la $a0, cmpDivH
-	syscall	
+	printStrLabel(cmpDivH)
 	
 	#linha 3 char
-	addiu $v0, $zero, 4
-	la $a0, cmpL2
-	syscall
+	printStrLabel(cmpL2)
 	
-	addiu $v0, $zero, 11
-	la $a0, campo+3
-	lb $a0, ($a0)
-	syscall
+	getArrImediate(campo, 3, $t0)
+	printChar($t0)
 	
-	addiu $v0, $zero, 4
-	la $a0, cmpDivV
-	syscall	
+	printStrLabel(cmpDivV)
 	
-	addiu $v0, $zero, 11
-	la $a0, campo+4
-	lb $a0, ($a0)
-	syscall
+	getArrImediate(campo, 4, $t0)
+	printChar($t0)
 	
-	addiu $v0, $zero, 4
-	la $a0, cmpDivV
-	syscall	
+	printStrLabel(cmpDivV)
 	
-	addiu $v0, $zero, 11
-	la $a0, campo+5
-	lb $a0, ($a0)
-	syscall
+	getArrImediate(campo, 5, $t0)
+	printChar($t0)
 	
 	#linha 4 div
-	addiu $v0, $zero, 4
-	la $a0, cmpDivH
-	syscall	
+	printStrLabel(cmpDivH)
 	
 	#linha 5 char
-	addiu $v0, $zero, 4
-	la $a0, cmpL3
-	syscall
+	printStrLabel(cmpL3)
 	
-	addiu $v0, $zero, 11
-	la $a0, campo+6
-	lb $a0, ($a0)
-	syscall
+	getArrImediate(campo, 6, $t0)
+	printChar($t0)
 	
-	addiu $v0, $zero, 4
-	la $a0, cmpDivV
-	syscall	
+	printStrLabel(cmpDivV)
 	
-	addiu $v0, $zero, 11
-	la $a0, campo+7
-	lb $a0, ($a0)
-	syscall
+	getArrImediate(campo, 7, $t0)
+	printChar($t0)
 	
-	addiu $v0, $zero, 4
-	la $a0, cmpDivV
-	syscall	
+	printStrLabel(cmpDivV)
 	
-	addiu $v0, $zero, 11
-	la $a0, campo+8
-	lb $a0, ($a0)
-	syscall
+	getArrImediate(campo, 8, $t0)
+	printChar($t0)
 	
-	addiu $v0, $zero, 4
-	la $a0, cmpNL
-	syscall	
-	
+	printStrLabel(cmpNL)
 	jr $ra
 
-# v0 <= 0/1
+
 valido:
 	bltz $s0, valido.false 		# linha < 0 => false
 	bltz $s1, valido.false		# col < 0   => false
@@ -366,7 +323,7 @@ ganhou.lose:
 	jr $ra
 ganhou.win:
 	addiu $v0, $zero 1		# ganhou = true
-	addiu $s3, $zero, $t0		# T0 tem o valor do jogador
+	add $s3, $zero, $t0		# T0 tem o valor do jogador
 	jr $ra
 	
 main:
