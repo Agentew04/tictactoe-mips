@@ -65,6 +65,26 @@ endLoop:
 	add %dest, $v0, $zero
 .end_macro 
 
+.macro checkSpace(%r1, %r2, %r3, %rd)
+	add %rd, $zero, %r1	# RD = R1
+	addi %rd, %rd, -32	# RD -= 32
+	beq %rd, $zero, false 	# if RD == 0, goto false
+	
+	add %rd, $zero, %r2	# RD = R2
+	addi %rd, %rd, -32	# RD -= 32
+	beq %rd, $zero, false 	# if RD == 0, goto false
+	
+	add %rd, $zero, %r3	# RD = R3
+	addi %rd, %rd, -32	# RD -= 32
+	beq %rd, $zero, false 	# if RD == 0, goto false
+	
+	addiu %rd, $zero, 1	# RD = 1
+	j end
+false:
+	addiu %rd, $zero, 0	# RD = 0
+end:
+.end_macro 
+
 .macro printStr(%str)
 	.data
 minhaStr: .asciiz %str
@@ -103,16 +123,17 @@ end:
 .end_macro 
 
 
-# variaveis
 .data
 campo:		.space 9 # campo de chars 3x3 = 9
 cmpNL:		.asciiz "\n"
-cmpTopLabel:	.asciiz "\\ a   b   c\n"
-cmpL1: 		.asciiz "a "
-cmpL2: 		.asciiz "b "
-cmpL3: 		.asciiz "c "
+cmpTopLabel:	.asciiz "\\ 0   1   2\n"
+cmpL1: 		.asciiz "0 "
+cmpL2: 		.asciiz "1 "
+cmpL3: 		.asciiz "2 "
 cmpDivV: 	.asciiz " | "
 cmpDivH: 	.asciiz "\n ---+---+---\n"
+inputL:		.asciiz "\nDigite a linha de sua jogada: "
+inputC:		.asciiz "\nDigite a coluna de sua jogada: "
 
 .eqv XCHAR 88
 .eqv OCHAR 79
@@ -249,6 +270,9 @@ valido.false:
 	addiu $v0, $zero, 0	# return 0
 	jr $ra
 
+empate:
+	
+
 fillBody:
 	addiu $t1, $zero, 32
 	sb $t1, campo($t0)
@@ -261,7 +285,7 @@ setChar:
 	la $t1, campo		# T1 = &campo
 	add $t0, $t1, $t0	# T0 = &campo + T0 => T0 = char*
 	
-	mod($t2, 2, $t2)
+	mod($s4, 2, $t2)
 	beqz $t2, setChar.X	# if COUNTER % 2 == 0, T2='X' else T2='O'
 	addiu $t2, $zero, OCHAR # T2 = 'O'
 	j setChar.End
@@ -272,74 +296,78 @@ setChar.End:
 	jr $ra
 
 ganhou:
-	# linhas
-	lb $t0, campo+0
-	lb $t1, campo+1
-	lb $t2, campo+2
-	equals($t0, $t1, $t2, $t0)
-	bgtz $t0, ganhou.win
-
-	lb $t0, campo+3
-	lb $t1, campo+4
-	lb $t2, campo+5
-	equals($t0, $t1, $t2, $t0)
-	bgtz $t0, ganhou.win
+ganhou.col1:				# 0 3 6
+	lb $t0, campo+0			# T0 = campo[A]
+	lb $t1, campo+3			# T1 = campo[B]
+	lb $t2, campo+6			# T2 = campo[C]
+	checkSpace($t0,$t1,$t2,$t3)	# T3 = !(T0==' ' || T1==' ' || T2==' ')
+	beq $t3, $zero, ganhou.col2	# if T3==0, goto next
+	equals($t0,$t1,$t2,$t3)		# T3 = (T0==T1==T2)
+	bgtz $t3, ganhou.win
+ganhou.col2:				# 1 4 7
+	lb $t0, campo+1			# T0 = campo[A]
+	lb $t1, campo+4			# T1 = campo[B]
+	lb $t2, campo+7			# T2 = campo[C]
+	checkSpace($t0,$t1,$t2,$t3)	# T3 = !(T0==' ' || T1==' ' || T2==' ')
+	beq $t3, $zero, ganhou.col3	# if T3==0, goto next
+	equals($t0,$t1,$t2,$t3)		# T3 = (T0==T1==T2)
+	bgtz $t3, ganhou.win
+ganhou.col3:				# 2 5 8
+	lb $t0, campo+2			# T0 = campo[A]
+	lb $t1, campo+5			# T1 = campo[B]
+	lb $t2, campo+8			# T2 = campo[C]
+	checkSpace($t0,$t1,$t2,$t3)	# T3 = !(T0==' ' || T1==' ' || T2==' ')
+	beq $t3, $zero, ganhou.lin1	# if T3==0, goto next
+	equals($t0,$t1,$t2,$t3)		# T3 = (T0==T1==T2)
+	bgtz $t3, ganhou.win
+ganhou.lin1:				# 0 1 2
+	lb $t0, campo+0			# T0 = campo[A]
+	lb $t1, campo+1			# T1 = campo[B]
+	lb $t2, campo+2			# T2 = campo[C]
+	checkSpace($t0,$t1,$t2,$t3)	# T3 = !(T0==' ' || T1==' ' || T2==' ')
+	beq $t3, $zero, ganhou.lin2	# if T3==0, goto next
+	equals($t0,$t1,$t2,$t3)		# T3 = (T0==T1==T2)
+	bgtz $t3, ganhou.win
+ganhou.lin2:				# 3 4 5
+	lb $t0, campo+3			# T0 = campo[A]
+	lb $t1, campo+4			# T1 = campo[B]
+	lb $t2, campo+5			# T2 = campo[C]
+	checkSpace($t0,$t1,$t2,$t3)	# T3 = !(T0==' ' || T1==' ' || T2==' ')
+	beq $t3, $zero, ganhou.lin3	# if T3==0, goto next
+	equals($t0,$t1,$t2,$t3)		# T3 = (T0==T1==T2)
+	bgtz $t3, ganhou.win
+ganhou.lin3:				# 6 7 8
+	lb $t0, campo+6			# T0 = campo[A]
+	lb $t1, campo+7			# T1 = campo[B]
+	lb $t2, campo+8			# T2 = campo[C]
+	checkSpace($t0,$t1,$t2,$t3)	# T3 = !(T0==' ' || T1==' ' || T2==' ')
+	beq $t3, $zero, ganhou.dia1	# if T3==0, goto next
+	equals($t0,$t1,$t2,$t3)		# T3 = (T0==T1==T2)
+	bgtz $t3, ganhou.win
+ganhou.dia1:				# 2 4 6
+	lb $t0, campo+2			# T0 = campo[A]
+	lb $t1, campo+4			# T1 = campo[B]
+	lb $t2, campo+6			# T2 = campo[C]
+	checkSpace($t0,$t1,$t2,$t3)	# T3 = !(T0==' ' || T1==' ' || T2==' ')
+	beq $t3, $zero, ganhou.dia2	# if T3==0, goto next
+	equals($t0,$t1,$t2,$t3)		# T3 = (T0==T1==T2)
+	bgtz $t3, ganhou.win
+ganhou.dia2:				# 0 4 8
+	lb $t0, campo+0			# T0 = campo[A]
+	lb $t1, campo+4			# T1 = campo[B]
+	lb $t2, campo+8			# T2 = campo[C]
+	checkSpace($t0,$t1,$t2,$t3)	# T3 = !(T0==' ' || T1==' ' || T2==' ')
+	beq $t3, $zero, ganhou.lose	# if T3==0, goto next
+	equals($t0,$t1,$t2,$t3)		# T3 = (T0==T1==T2)
+	bgtz $t3, ganhou.win
 	
-	lb $t0, campo+6
-	lb $t1, campo+7
-	lb $t2, campo+8
-	equals($t0, $t1, $t2, $t0)
-	bgtz $t0, ganhou.win
-	
-	# colunas
-	lb $t0, campo+0
-	lb $t1, campo+3
-	lb $t2, campo+6
-	equals($t0, $t1, $t2, $t0)
-	bgtz $t0, ganhou.win
-
-	lb $t0, campo+1
-	lb $t1, campo+4
-	lb $t2, campo+7
-	equals($t0, $t1, $t2, $t0)
-	bgtz $t0, ganhou.win
-	
-	lb $t0, campo+2
-	lb $t1, campo+5
-	lb $t2, campo+8
-	equals($t0, $t1, $t2, $t0)
-	bgtz $t0, ganhou.win
-	
-	# diagonais
-	lb $t0, campo+2
-	lb $t1, campo+4
-	lb $t2, campo+6
-	equals($t0, $t1, $t2, $t0)
-	bgtz $t0, ganhou.win
-	
-	lb $t0, campo+0
-	lb $t1, campo+4
-	lb $t2, campo+8
-	equals($t0, $t1, $t2, $t0)
-	bgtz $t0, ganhou.win
-	
-ganhou.false:
+ganhou.lose:
 	addiu $v0, $zero, 0		# ganhou = false
 	jr $ra
 ganhou.win:
-	# T1 => o char do meio
-	addi $t1, $t1, -SPACECHAR
-	beq $t1, $zero, ganhou.false	# if oq detectou era space
-	
-	# quem jogou por ultimo
-	mod($s4, 2, $t0)
-	beq $t0, $zero, ganhou.player 	# S4%2==0 goto player else goto AI
-	addi $v0, $zero, -1
+	addiu $v0, $zero 1		# ganhou = true
+	addiu $s3, $zero, $t0		# T0 tem o valor do jogador
 	jr $ra
-ganhou.player:
-	addi $v0, $zero, 1
-	jr $ra
-	
 	
 main:
 	for($t0, 9, fillBody)	# fill campo with 32(space)
@@ -351,6 +379,7 @@ main:
 	# S4 => Counter
 	add $s4, $zero, $zero
 	
+	jal printCampo			# print empty campo once
 main.loopStart:				# do
 	mod($s4, 2, $t0)		# T0 = S4 % 2
 	beq $t0, $zero, main.playerInput	# if(T0 == 0) goto Player
@@ -370,12 +399,9 @@ main.inputEnd:
 	
 	jal printCampo			# printCampo()
 	
-	jal ganhou			# V0 = ganhou() => (0 -> ninguem; 1 -> PLAYER; -1 -> AI)
 	add $s4, $s4, 1			# i++
-	#beq $v0, $zero, main.loopStart  # if !ganhou() play
-	j main.loopStart
-	add $s3, $zero, $v0
-	
+	jal ganhou			# V0 = ganhou() => (0 -> ninguem; 1 -> PLAYER; -1 -> AI)
+	beq $v0, $zero, main.loopStart  # if !ganhou() play
 main.endGame:
 	
 	printStr("O jogo acabou.\nO vencedor eh: ")

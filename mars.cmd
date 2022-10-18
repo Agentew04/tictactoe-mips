@@ -1,0 +1,1 @@
+java -jar "D:\setups e apps\.SETUPS\Mars4_5.jar"
