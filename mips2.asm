@@ -28,27 +28,6 @@ endLoop:
 	syscall 
 .end_macro 
 
-.macro printChar (%label, %offset)
-	addiu $v0, $zero, 11	# set syscall service
-	li $t0, %offset		# load offset to T0
-	la $t1, %label		# load label addr to T1
-	add $a0, $t1, $t0	# set argument to wanted addr
-	lb $a0, ($a0)		# load real int
-	syscall 		# syscall, print($a0)
-.end_macro
-
-.macro readChar(%dest)
-	addiu $v0, $zero, 12
-	syscall 
-	add %dest, $zero, $v0
-.end_macro 
-
-.macro printInt (%x)
-	addiu $v0, $zero, 1
-	add $a0, %x, $zero
-	syscall 
-.end_macro 
-
 .macro randomInt(%max, %dest)
 	addiu $v0, $zero, 42	# set syscall service
 	addiu $a0, $zero, 0	# A0 to 0 (random machine ID), can be any number
@@ -56,15 +35,6 @@ endLoop:
 	syscall 		# syscall rand()%max
 	add %dest, $zero, $a0	# set result to destination register
 .end_macro 
-
-.macro printInt (%label, %offset)
-	addiu $v0, $zero, 1	# set syscall service
-	li $t0, %offset		# load offset to T0
-	la $t1, %label		# load label addr to T1
-	add $a0, $t1, $t0	# set argument to wanted addr
-	lb $a0, ($a0)		# load real int
-	syscall 		# syscall, print($a0)
-.end_macro
 
 .macro readInt (%dest)
 	addiu $v0, $zero, 5
@@ -90,16 +60,7 @@ endLoop:
 false:
 	addiu %rd, $zero, 0	# RD = 0
 end:
-.end_macro 
-
-.macro printStr(%str)
-	.data
-minhaStr: .asciiz %str
-	.text 
-	addiu $v0, $zero, 4
-	la $a0, minhaStr
-	syscall
-.end_macro 
+.end_macro  
 
 .macro printStrLabel(%label)
 	addiu $v0, $zero, 4
@@ -119,12 +80,6 @@ minhaStr: .asciiz %str
 	mfhi %dest		# T2 = i%2
 .end_macro 
 
-.macro getArrReg(%label, %offset, %dest)
-	la $t0, %label
-	addiu $t0, $t0, %offset
-	lb %dest, ($t0)
-.end_macro 
-
 .macro equals(%reg1, %reg2, %reg3, %dest)
 	bne %reg1, %reg2, false
 	bne %reg2, %reg3, false
@@ -134,7 +89,6 @@ false:
 	addiu %dest, $zero, 0
 end:
 .end_macro 
-
 
 .data
 campo:		.space 9 # campo de chars 3x3 = 9
