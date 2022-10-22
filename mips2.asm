@@ -2,7 +2,14 @@
 j main
 
 .macro notBool(%rs,%rd)
-	nor %rd, %rs, %rs
+	beq %rs, $zero, toOne
+	j toZero
+toOne:
+	addiu %rd, $zero, 1
+	j end
+toZero:
+	add %rd, $zero, $zero
+end:
 .end_macro 
 
 .macro for(%i, %to, %body)
@@ -238,15 +245,15 @@ valido.false:
 # v=1 if not empate
 # v=0 if empate
 empate:
-	add $t3, $zero, $ra	# save return addr
-	addiu $t2, $zero, 0	# T2 = 0
-	for($t0, 9, empateBody)	# T2 = if false, T2=0 
-	notBool($t2, $v0)
+	add $t3, $zero, $ra	# T3 = RA
+	addiu $t2, $zero, 0	# T2 = 0 (se achou ' ')
+	for($t0, 9, empateBody)	# for(T0=0; T0<9; T0++T2) empateBody()
+	notBool($t2, $v0)	# V0 = !T2
 	jr $t3
 empateBody:
 	lb $t1, campo($t0)		# T1 = campo[T0]
 	addi $t1, $t1, -32 		# T1 -= 32
-	beq $t1, $zero, empateBody.true	# if campo[T0]==' ', T2=1
+	beq $t1, $zero, empateBody.true	# if campo[T0]==' ' then T2=1
 	jr $ra
 empateBody.true:
 	addiu $t2, $zero, 1
@@ -381,17 +388,17 @@ main.inputEnd:
 	add $s4, $s4, 1			# i++
 	
 	jal ganhou			# V0 = ganhou() => (0 -> ninguem; 1 -> PLAYER; -1 -> AI)
-	add $t0, $zero, $v0		# RES = V0
-	sll $t0, $t0, 1			# RES = RES << 1
+	add $s2, $zero, $v0		# RES(S2) = V0
+	sll $s2, $s2, 1			# RES = RES << 1
 	
 	jal empate			# V0 = empate() => (0-empate // 1-nao empate)
-	add $t0, $t0, $v0		# RES += V0
+	add $s2, $s2, $v0		# RES += V0
 	
-	beq $t0, $zero, main.loopStart  # if RES==0 play
+	beq $s2, $zero, main.loopStart  # if RES==0 play
 	
-	addi $t0, $t0, -2		# RES -= 2
-	bgez $t0, main.win		# ganhou()
-	j main.tie
+	addi $s2, $s2, -2		# RES -= 2
+	bgez $s2, main.win		# if RES==0 ganhou()
+	j main.tie			# else empatou()
 
 main.win:
 	printStrLabel(endChat)
