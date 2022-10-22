@@ -1,6 +1,10 @@
 .text
 j main
 
+.macro notBool(%rs,%rd)
+	nor %rd, %rs, %rs
+.end_macro 
+
 .macro for(%i, %to, %body)
 	li %i, 0		# i = 0
 startLoop:
@@ -237,7 +241,7 @@ empate:
 	add $t3, $zero, $ra	# save return addr
 	addiu $t2, $zero, 0	# T2 = 0
 	for($t0, 9, empateBody)	# T2 = if false, T2=0 
-	add $v0, $zero, $t2
+	notBool($t2, $v0)
 	jr $t3
 empateBody:
 	lb $t1, campo($t0)		# T1 = campo[T0]
