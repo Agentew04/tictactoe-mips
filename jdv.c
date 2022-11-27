@@ -32,55 +32,38 @@ void printCampo(){
 
 // retorna se ganhou e seta o vencedor
 int ganhou(){
-
-    // col1 036
-    if((campo[0] != ' ' && campo[3] != ' ' && campo[6] != ' ') &&
-        (campo[0] == campo[3] && campo[3] == campo[6])){
-        vencedor = campo[0];
-        return 1;
+    // i, a1,a2,a3, temps
+    int i=0;
+    while(i<3){
+        char a1,a2,a3;
+        a1 = campo[i*3];
+        a2 = campo[i*3+1];
+        a3 = campo[i*3+2];
+        if(a1==a2 && a2==a3 && a1!=' '){
+            vencedor = a1;
+            break;
+        }
+        a1 = campo[i];
+        a2 = campo[i+3];
+        a3 = campo[i+6];
+        if(a1==a2 && a2==a3 && a1!=' '){
+            vencedor = a1;
+            break;
+        }
+        if(i==2)
+            break;
+        a1 = campo[i*2];
+        a2 = campo[4];
+        a3 = campo[8-i*2];
+        if(a1==a2 && a2==a3 && a1!=' '){
+            vencedor = a1;
+            break;
+        }
+        i++;
     }
-    // col2 147
-    if((campo[1] != ' ' && campo[4] != ' ' && campo[7] != ' ') &&
-        (campo[1] == campo[4] && campo[4] == campo[7])){
-        vencedor = campo[1];
+    vencedor = win;
+    if(vencedor!=' ')
         return 1;
-    }
-    // col3 258
-    if((campo[2] != ' ' && campo[5] != ' ' && campo[8] != ' ') &&
-        (campo[2] == campo[5] && campo[5] == campo[8])){
-        vencedor = campo[2];
-        return 1;
-    }
-    // lin1 012
-    if((campo[0] != ' ' && campo[1] != ' ' && campo[2] != ' ') &&
-        (campo[0] == campo[1] && campo[1] == campo[2])){
-        vencedor = campo[0];
-        return 1;
-    }
-    // lin2 345
-    if((campo[3] != ' ' && campo[4] != ' ' && campo[5] != ' ') &&
-        (campo[3] == campo[4] && campo[4] == campo[5])){
-        vencedor = campo[3];
-        return 1;
-    }
-    // lin3 678
-    if((campo[6] != ' ' && campo[7] != ' ' && campo[8] != ' ') &&
-        (campo[6] == campo[7] && campo[7] == campo[8])){
-        vencedor = campo[6];
-        return 1;
-    }
-    // diag1 048
-    if((campo[0] != ' ' && campo[4] != ' ' && campo[8] != ' ') &&
-        (campo[0] == campo[4] && campo[4] == campo[8])){
-        vencedor = campo[0];
-        return 1;
-    }
-    // diag2 246
-    if((campo[2] != ' ' && campo[4] != ' ' && campo[6] != ' ') &&
-        (campo[2] == campo[4] && campo[4] == campo[6])){
-        vencedor = campo[2];
-        return 1;
-    }
     return 0;
 }
 
