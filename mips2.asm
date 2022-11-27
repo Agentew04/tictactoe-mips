@@ -98,6 +98,7 @@ campo:		.space 9 # campo de chars 3x3 = 9
 linha:		.word 0
 coluna:		.word 0
 winner:		.byte SPACECHAR
+counter:	.word 0
 
 .text
 
@@ -227,15 +228,18 @@ fillBody:
 setChar:
 # T4 = linha
 # T5 = coluna
+# T6 = counter
 	lw $t4, linha
 	lw $t5, coluna
+	lw $t6, counter
 	addiu $t0, $zero, 3	# T0 = 3
 	mul $t0, $t4, $t0	# T0 = LINHA * 3
 	add $t0, $t0, $t5	# T0 = COL + T0
 	la $t1, campo		# T1 = &campo
 	add $t0, $t1, $t0	# T0 = &campo + T0 => T0 = char*
 	
-	mod($s4, 2, $t2)
+	
+	mod($t6, 2, $t2)
 	beqz $t2, setChar.X	# if COUNTER % 2 == 0, T2='X' else T2='O'
 	addiu $t2, $zero, OCHAR # T2 = 'O'
 	j setChar.End
@@ -266,9 +270,9 @@ ganhou:
 		bgtz $t4, ganhou.while.chkWn	# if(check(t1,t2,t3) chkWn(); break;
 		
 		# coluna
-		lb $t1, campo($t0)	# T1 = campo[i]
-		lb $t2, campo+3($t0)	# T2 = campo[i+3]
-		lb $t3, campo+6($t0)	# T3 = campo[i+6]
+		lb $t1, campo($t0)		# T1 = campo[i]
+		lb $t2, campo+3($t0)		# T2 = campo[i+3]
+		lb $t3, campo+6($t0)		# T3 = campo[i+6]
 		checkSpace($t1,$t2,$t3,$t4)
 		bgtz $t4, ganhou.while.chkWn	# if(check(t1,t2,t3) chkWn(); break;
 		
@@ -276,12 +280,12 @@ ganhou:
 		beq $t0, 2, ganhou.while.end	# if(i==2) break;
 		
 		# diagonal
-		sll $t4, $t0, 1		# T4 = i*2 (T5 == i << 1)
-		lb $t1, campo($t4)	# T1 = campo[i*2]
-		lb $t2, campo+4		# T2 = campo[4]
+		sll $t4, $t0, 1			# T4 = i*2 (T5 == i << 1)
+		lb $t1, campo($t4)		# T1 = campo[i*2]
+		lb $t2, campo+4			# T2 = campo[4]
 		li $t5, 8
-		sub $t5,$t5,$t4		# T5 = 8(T5) - i*2(T4)
-		lb $t3, campo($t5)	# T3 = campo[8-i*2]
+		sub $t5,$t5,$t4			# T5 = 8(T5) - i*2(T4)
+		lb $t3, campo($t5)		# T3 = campo[8-i*2]
 		checkSpace($t1,$t2,$t3,$t4)
 		bgtz $t4, ganhou.while.chkWn	# if(check(t2,t3,t4) chkWn(); break;
 		
@@ -291,7 +295,7 @@ ganhou:
 		j ganhou.win		# goto ganhou
 	ganhou.while.end:
 	# aqui ele não ganhou
-	li $v0, 0		# not ganhou
+	li $v0, 0			# not ganhou
 	jr $ra			
 	ganhou.win:			# ganhou
 		# aqui o winner está em T1
@@ -301,19 +305,15 @@ ganhou:
 
 
 main:
-	for($t0, 9, fillBody)	# fill campo with 32(space)
+	for($t0, 9, fillBody)	# fill campo with ' '
 	
-	# S0 => linha
-	# S1 => col
-	# S3 => Winner
 	li $s3, SPACECHAR
 	sb $s3, winner
-	# S4 => Counter
-	li $s4, 0
 	
 	jal printCampo			# print empty campo once
 	main.loopStart:				# do
-		mod($s4, 2, $t0)		# T0 = S4 % 2
+		lw $t1, counter
+		mod($t1, 2, $t0)		# T0 = S4 % 2
 		beq $t0, $zero, main.playerInput	# if(T0 == 0) goto Player
 			randomInt(3, $t0)		# LINHA = RANDOM()
 			sw $t0, linha
@@ -335,7 +335,9 @@ main:
 		
 		jal printCampo			# printCampo()
 	
-		add $s4, $s4, 1			# i++
+		lw $t0, counter
+		addi $t0, $t0, 1		# i++
+		sw $t0, counter
 	
 		jal ganhou			# V0 = ganhou() => (0 -> ninguem; 1 -> PLAYER; -1 -> AI)
 		move $t0, $v0			# RES(T0) = V0
