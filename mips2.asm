@@ -56,6 +56,17 @@ j main
 	end:
 .end_macro  
 
+# R1 == R2 && R2 == R3
+.macro equals(%r1, %r2, %r3, %rd)
+	bne %r1, %r2, false
+	bne %r2, %r3, false
+	li %rd, 1
+	j end
+	false:
+	li %rd, 0
+	end:
+.end_macro 
+
 .macro printStrLabel(%label)
 	li $v0, 4
 	la $a0, %label
@@ -73,6 +84,58 @@ j main
 	li %rd, %n		# RD = 3
 	mul %rd, %rl, %rd	# RD = LINHA*3
 	add %rd, %rd, %rc	# RD = RD + COL
+.end_macro 
+
+.macro linearToCoord(%r1, %rl, %rc)
+	# switch
+	n0: bne %r1, 0, n1
+	li %rl, 0
+	li %rc, 0
+	j end
+	n1: bne %r1, 1, n2
+	li %rl, 0
+	li %rc, 1
+	j end
+	n2: bne %r1, 2, n3
+	li %rl, 0
+	li %rc, 2
+	j end
+	n3: bne %r1, 3, n4
+	li %rl, 1
+	li %rc, 0
+	j end
+	n4: bne %r1, 4, n5
+	li %rl, 1
+	li %rc, 1
+	j end
+	n5: bne %r1, 5, n6
+	li %rl, 1
+	li %rc, 2
+	j end
+	n6: bne %r1, 6, n7
+	li %rl, 2
+	li %rc, 0
+	j end
+	n7: bne %r1, 7, n8
+	li %rl, 2
+	li %rc, 1
+	j end
+	n8: bne %r1, 8, end
+	li %rl, 2
+	li %rc, 2
+	end:
+.end_macro 
+
+# R1 == ' ' && R2==R3==RC
+.macro checkEmpty(%r1, %r2, %r3, %rc, %rd)
+	bne %r2, %r3, false
+	bne %r2, %rc, false
+	bne %r1, SPACECHAR, false
+	li %rd, 1
+	j end
+	false:
+	li %rd, 0
+	end:
 .end_macro 
 
 .data
@@ -304,6 +367,137 @@ ganhou:
 		jr $ra
 
 
+# A0 = CHAR
+# V0 <= REGRA APLICA
+# V1 <= POS
+checkdois:
+# T0 = i
+# T1, T2, T3 = buffer de campo
+# T4, T5, T6 = temp/aux
+	li $t0, 0
+	li $v0, 0
+	
+	checkdois.while: bge $t0, 3, checkdois.while.end
+		# linha
+		li $t5, 3
+		mul $t5, $t0, $t5 	# triple = 3*i
+		lb $t1, campo($t5)	# T1 = campo[3*i]
+		lb $t2, campo+1($t5)	# T2 = campo[3*i+1]
+		lb $t3, campo+2($t5)	# T3 = campo[3*i+2]
+		checkEmpty($t1, $t2, $t3, $a0, $t4)
+		beqz $t4, l1.fl		# skip if false
+		li $v0, 1
+		move $v1, $t5		# return (true, idx)
+		jr $ra
+		l1.fl:
+		checkEmpty($t2, $t1, $t3, $a0, $t4)
+		beqz $t4, l2.fl		# skip if false
+		li $v0, 1
+		addi $t4, $t5, 1
+		move $v1, $t4		# return (true, idx)
+		jr $ra
+		l2.fl:
+		checkEmpty($t3, $t1, $t2, $a0, $t4)
+		beqz $t4, l3.fl
+		li $v0, 1
+		addi $t4, $t5, 2
+		move $v1, $t4		# return (true, idx)
+		jr $ra
+		l3.fl:
+		
+		# coluna
+		lb $t1, campo($t0)		# T1 = campo[i]
+		lb $t2, campo+3($t0)		# T2 = campo[i+3]
+		lb $t3, campo+6($t0)		# T3 = campo[i+6]
+		checkEmpty($t1, $t2, $t3, $a0, $t4)
+		beqz $t4, c1.fl
+		li $v0, 1
+		move $v1, $t0		# return (true, idx)
+		jr $ra
+		c1.fl:
+		checkEmpty($t2, $t1, $t3, $a0, $t4)
+		beqz $t4, c2.fl
+		li $v0, 1
+		addi $t4, $t0, 3
+		move $v1, $t4		# return (true, idx)
+		jr $ra
+		c2.fl:
+		checkEmpty($t3, $t1, $t2, $a0, $t4)
+		beqz $t4, c3.fl
+		li $v0, 1
+		addi $t4, $t0, 6
+		move $v1, $t4		# return (true, idx)
+		jr $ra
+		c3.fl:
+		
+		bge $t0, 2, checkdois.while.end	# if(i>=2) break;
+		
+		# diagonal
+		sll $t6, $t0, 1			# T6 = i*2 (T5 == i << 1)
+		lb $t1, campo($t6)		# T1 = campo[i*2]
+		lb $t2, campo+4			# T2 = campo[4]
+		li $t5, 8
+		sub $t5,$t5,$t6			# T5 = 8(T5) - i*2(T4)
+		lb $t3, campo($t5)		# T3 = campo[8-i*2]
+		checkEmpty($t1, $t2, $t3, $a0, $t4)
+		beqz $t4, d1.fl
+		li $v0, 1
+		move $v1, $t6		# return (true, idx)
+		jr $ra
+		d1.fl:
+		checkEmpty($t2, $t1, $t3, $a0, $t4)
+		beqz $t4, d2.fl
+		li $v0, 1
+		li $v1, 4		# return (true, idx)
+		jr $ra
+		d2.fl:
+		checkEmpty($t3, $t1, $t2, $a0, $t4)
+		beqz $t4, d3.fl
+		li $v0, 1		
+		move $v1, $t5		# return (true, idx)
+		jr $ra
+		d3.fl:
+		
+		
+		addi $t0, $t0, 1	# i++
+	checkdois.while.end:
+	jr $ra 				# return false;
+	
+	
+	
+pcJoga:
+	addi $sp, $sp, -4	# stackalloc 4 bytes
+	sw $ra, ($sp)
+	# save $RA
+	
+	
+	# regra 1, ganhar
+	pcJoga.regra1:
+		li $a0, XCHAR
+		jal checkdois			# (V0, V1) = checkdois(A0)
+		beqz $v0, pcJoga.regra2
+		linearToCoord($v1, $t0, $t1) 	# T0 = linha; T1 = coluna
+		sw $t0, linha
+		sw $t1, coluna
+		j pcJoga.end
+	pcJoga.regra2:
+		li $a0, OCHAR
+		jal checkdois			# (V0, V1) = checkdois(A0)
+		beqz $v0, pcJoga.regra3
+		linearToCoord($v1, $t0, $t1) 	# T0 = linha; T1 = coluna
+		sw $t0, linha
+		sw $t1, coluna
+		j pcJoga.end
+	pcJoga.regra3:
+		randomInt(3, $t0)		# LINHA = RANDOM()
+		sw $t0, linha
+		randomInt(3, $t0)		# COL = RANDOM()
+		sw $t0, coluna
+	
+	pcJoga.end:
+	lw $ra, ($sp)
+	addi $sp, $sp, 4	# dealloc 4 bytes
+	jr $ra
 main:
 	for($t0, 9, fillBody)	# fill campo with ' '
 	
@@ -315,10 +509,7 @@ main:
 		lw $t1, counter
 		mod($t1, 2, $t0)		# T0 = S4 % 2
 		beq $t0, $zero, main.playerInput	# if(T0 == 0) goto Player
-			randomInt(3, $t0)		# LINHA = RANDOM()
-			sw $t0, linha
-			randomInt(3, $t0)		# COL = RANDOM()
-			sw $t0, coluna
+			
 			j main.inputEnd			# goto endInput
 		main.playerInput:			# player input
 			printStrLabel(inputL)
