@@ -24,9 +24,21 @@ j main
 .end_macro 
 
 .macro printChar(%x)
-	addiu $v0, $zero, 11
+	li $v0, 11
 	add $a0, %x, $zero
 	syscall 
+.end_macro 
+
+.macro printInt(%rs)
+	li $v0, 1
+	move $a0, %rs
+	syscall
+.end_macro 
+
+.macro readChar(%rd)
+	li $v0, 12
+	syscall
+	move %rd, $v0
 .end_macro 
 
 .macro randomInt(%max, %dest)
@@ -70,6 +82,15 @@ j main
 .macro printStrLabel(%label)
 	li $v0, 4
 	la $a0, %label
+	syscall
+.end_macro 
+
+.macro printStrLiteral(%str)
+	.data
+	str: .asciiz %str
+	.text
+	li $v0, 4
+	la $a0, str
 	syscall
 .end_macro 
 
@@ -142,6 +163,10 @@ j main
 .eqv XCHAR 88
 .eqv OCHAR 79
 .eqv SPACECHAR 32
+.eqv SCHARUPP 83
+.eqv SCHARLOW 115
+.eqv NCHARUPP 78
+.eqv NCHARLOW 110
 
 cmpTopLabel:	.asciiz "\\ 0   1   2\n"
 cmpL1: 		.asciiz "0 "
@@ -156,12 +181,16 @@ winChat:	.asciiz "O vencedor eh: "
 tieChat:	.asciiz "Deu empate. Nao tem vencedores!\n"
 exclamation:	.asciiz "!"
 charNL:		.asciiz "\n"
+replayChat:	.asciiz "Voce quer jogar de novo? [s/N] "
+winCountChat:	.asciiz "Voce ganhou "
+vezesChat:	.asciiz " vezes!\n"
 
 campo:		.space 9 # campo de chars 3x3 = 9
 linha:		.word 0
 coluna:		.word 0
 winner:		.byte SPACECHAR
 counter:	.word 0
+winCount:	.word 0
 
 .text
 
@@ -460,11 +489,14 @@ checkdois:
 		
 		
 		addi $t0, $t0, 1	# i++
+		j checkdois.while	# restart loop
 	checkdois.while.end:
 	jr $ra 				# return false;
 	
-	
-	
+
+		
+# LINHA  <= VALOR
+# COLUNA <= VALOR 
 pcJoga:
 	addi $sp, $sp, -4	# stackalloc 4 bytes
 	sw $ra, ($sp)
@@ -493,23 +525,27 @@ pcJoga:
 		sw $t0, linha
 		randomInt(3, $t0)		# COL = RANDOM()
 		sw $t0, coluna
-	
 	pcJoga.end:
 	lw $ra, ($sp)
 	addi $sp, $sp, 4	# dealloc 4 bytes
 	jr $ra
+
+
+
 main:
 	for($t0, 9, fillBody)	# fill campo with ' '
 	
 	li $s3, SPACECHAR
 	sb $s3, winner
+	li $t0, 0
+	sw $t0, counter
 	
 	jal printCampo			# print empty campo once
 	main.loopStart:				# do
 		lw $t1, counter
 		mod($t1, 2, $t0)		# T0 = S4 % 2
 		beq $t0, $zero, main.playerInput	# if(T0 == 0) goto Player
-			
+			jal pcJoga
 			j main.inputEnd			# goto endInput
 		main.playerInput:			# player input
 			printStrLabel(inputL)
@@ -551,14 +587,25 @@ main:
 		printChar($t0)
 		printStrLabel(exclamation)
 		printStrLabel(charNL)
+		bne $t0, XCHAR, end
+		lw $t0, winCount	# winCount++
+		addi $t0, $t0, 1
+		sw $t0, winCount
+		printStrLabel(winCountChat)
+		printInt($t0)
+		printStrLabel(vezesChat)
 		j end
-	
 	main.tie:
 		printStrLabel(endChat)
 		printStrLabel(tieChat)
 		j end
 	
 end:
+printStrLabel(replayChat)
+readChar($t0)
+printStrLabel(charNL)
+beq $t0, SCHARUPP, main
+beq $t0, SCHARLOW, main		# restart game if requested
 	
 	
 	
