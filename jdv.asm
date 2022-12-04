@@ -25,7 +25,7 @@ j main
 
 .macro printChar(%x)
 	li $v0, 11
-	add $a0, %x, $zero
+	move $a0, %x
 	syscall 
 .end_macro 
 
@@ -194,7 +194,7 @@ winCount:	.word 0
 
 .text
 
-
+move 
 printCampo:
 	printStrLabel(cmpTopLabel)
 
@@ -311,7 +311,7 @@ empate:
 
 
 fillBody:
-	li $t1, 32
+	li $t1, SPACECHAR
 	sb $t1, campo($t0)
 	jr $ra
 	
@@ -505,21 +505,23 @@ pcJoga:
 	
 	# regra 1, ganhar
 	pcJoga.regra1:
-		li $a0, XCHAR
+		li $a0, OCHAR
 		jal checkdois			# (V0, V1) = checkdois(A0)
 		beqz $v0, pcJoga.regra2
 		linearToCoord($v1, $t0, $t1) 	# T0 = linha; T1 = coluna
 		sw $t0, linha
 		sw $t1, coluna
 		j pcJoga.end
+	# regra 2, impedir vitoria do oponente
 	pcJoga.regra2:
-		li $a0, OCHAR
+		li $a0, XCHAR
 		jal checkdois			# (V0, V1) = checkdois(A0)
 		beqz $v0, pcJoga.regra3
 		linearToCoord($v1, $t0, $t1) 	# T0 = linha; T1 = coluna
 		sw $t0, linha
 		sw $t1, coluna
 		j pcJoga.end
+	# regra 3, jogar aleatório
 	pcJoga.regra3:
 		randomInt(3, $t0)		# LINHA = RANDOM()
 		sw $t0, linha
@@ -606,15 +608,3 @@ readChar($t0)
 printStrLabel(charNL)
 beq $t0, SCHARUPP, main
 beq $t0, SCHARLOW, main		# restart game if requested
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
